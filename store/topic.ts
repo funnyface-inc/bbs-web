@@ -24,7 +24,7 @@ export default class TopicModule extends VuexModule {
   topic: Topic = { id: 0, title: '', description: '' };
 
   @MutationAction({ mutate: ['topics'] })
-  async fetchTopics(context) {
+  async fetchTopics(context: any) {
     try {
       const response = await context.apollo.query({ query: gql`
         {
@@ -59,8 +59,31 @@ export default class TopicModule extends VuexModule {
   }
 
   @MutationAction({ mutate: ['topic'] })
-  async createTopic() {
-    console.log('call create');
-    return { topic: {} };
+  async createTopic(context: any) {
+    try {
+      const response = await context.apollo.mutate({
+        variables: {
+          title: context.topic.title,
+          description: context.topic.description,
+          image: context.topic.image,
+        },
+        mutation: gql`
+          mutation CreateTopic($title: String!, $description: String!, $image: String!) {
+            createTopic(input: { title: $title, description: $description, image: $image}) {
+              topic {
+                id
+                title
+                image
+                description
+              }
+            }
+          }
+        `,
+      });
+      return { topic: {} };
+    } catch (e) {
+      console.log(e.networkError.result.errors)
+      return { topic:{} };
+    }
   }
 }

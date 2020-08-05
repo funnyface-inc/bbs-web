@@ -1,97 +1,75 @@
 <template>
-  <v-layout
-    column
-    justify-center
-    align-center
-  >
-    <v-flex
-      xs12
-      sm8
-      md6
-    >
-      <div class="text-center">
-        <logo />
-        <vuetify-logo />
-      </div>
+  <v-container class="lighten-5 mb-6" >
+
+    <v-dialog v-model="isOpenDialog" width="500">
+      <template v-slot:activator="{ on, attrs }">
+        <v-btn class="ma-2" outlined color="lime" v-bind="attrs" v-on="on" >
+          新規投稿
+        </v-btn>
+      </template>
+
       <v-card>
-        <v-card-title class="headline">
-          Welcome to the Vuetify + Nuxt.js template
+        <v-card-title>
+          <span class="headline">投稿内容</span>
         </v-card-title>
         <v-card-text>
-          <p>Vuetify is a progressive Material Design component framework for Vue.js. It was designed to empower developers to create amazing applications.</p>
-          <p>
-            For more information on Vuetify, check out the <a
-              href="https://vuetifyjs.com"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              documentation
-            </a>.
-          </p>
-          <p>
-            If you have questions, please join the official <a
-              href="https://chat.vuetifyjs.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-              title="chat"
-            >
-              discord
-            </a>.
-          </p>
-          <p>
-            Find a bug? Report it on the github <a
-              href="https://github.com/vuetifyjs/vuetify/issues"
-              target="_blank"
-              rel="noopener noreferrer"
-              title="contribute"
-            >
-              issue board
-            </a>.
-          </p>
-          <p>Thank you for developing with Vuetify and I look forward to bringing more exciting features in the future.</p>
-          <div class="text-xs-right">
-            <em><small>&mdash; John Leider</small></em>
-          </div>
-          <hr class="my-3">
-          <a
-            href="https://nuxtjs.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Nuxt Documentation
-          </a>
-          <br>
-          <a
-            href="https://github.com/nuxt/nuxt.js"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Nuxt GitHub
-          </a>
+          <v-text-field placeholder="タイトル" outlined v-model="title"></v-text-field>
+          <v-text-field placeholder="https://sample.png" outlined v-model="image"></v-text-field>
+          <v-textarea outlined hint="投稿内容" v-model="description"></v-textarea>
         </v-card-text>
         <v-card-actions>
-          <v-spacer />
-          <v-btn
-            color="primary"
-            nuxt
-            to="/inspire"
-          >
-            Continue
+          <v-spacer></v-spacer>
+          <v-btn color="primary" text @click="this.onCreateTopic">
+            投稿する
           </v-btn>
         </v-card-actions>
       </v-card>
-    </v-flex>
-  </v-layout>
+    </v-dialog>
+
+    <v-row>
+      <v-col cols="12" sm="4" md="4" v-for="(topic, index) in topics" :key="index" >
+        <v-card class="pa-2" outlined tile >
+          <v-img :src="topic.image" ></v-img>
+          <v-card-title>
+            {{ topic.name }}
+          </v-card-title>
+          <v-card-subtitle>
+            {{ topic.description }}
+          </v-card-subtitle>
+        </v-card>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
-<script>
-import Logo from '~/components/Logo.vue'
-import VuetifyLogo from '~/components/VuetifyLogo.vue'
+<script lang='ts'>
+import { Vue, Component, State, Action } from 'nuxt-property-decorator';
+import _ from 'lodash';
 
-export default {
-  components: {
-    Logo,
-    VuetifyLogo
+@Component
+export default class Topic extends Vue {
+
+  isOpenDialog: boolean = false;
+  title: string = '';
+  description: string = '';
+  image: string = '';
+
+  @State(state => state.topic.topics) topics
+  @State(state => state.topic.topic) topic
+  @Action('topic/createTopic') createTopic :any
+
+  async fetch({ app, store }) {
+    await store.dispatch('topic/fetchTopics', { apollo: app.apolloProvider.defaultClient });
+  }
+
+  async onCreateTopic() {
+    this.isOpenDialog = false;
+    const topic = {
+      title: this.title,
+      description: this.description,
+      image: this.image,
+    };
+    await this.createTopic({ apollo: this.$apolloProvider.defaultClient, topic });
   }
 }
 </script>
